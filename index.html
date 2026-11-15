@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Zo gezegd 2.2 – Mondeling</title>
+<style>
+:root{--bg:#0e1116;--bar:rgba(22,27,34,.82);--fg:#e6edf3;--mute:#8b949e;--acc:#4f8cff;--line:rgba(255,255,255,.08)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:14px/1.3 system-ui,Segoe UI,Roboto,sans-serif;overscroll-behavior:none}
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none;user-select:none}
+#stage.z{cursor:grab}
+#stage.drag{cursor:grabbing}
+#pg{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.6);border-radius:3px;-webkit-user-drag:none;transition:opacity .15s}
+#pg.fade{opacity:0}
+.bar{position:fixed;left:0;right:0;z-index:10;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bar);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:transform .25s}
+#top{top:0;border-bottom:1px solid var(--line)}
+#bot{bottom:0;border-top:1px solid var(--line);flex-direction:column;align-items:stretch;gap:6px}
+body.hide #top{transform:translateY(-100%)}body.hide #bot{transform:translateY(100%)}
+.title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp{flex:1}
+button,.chip{font:inherit;color:var(--fg);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+button:hover,.chip:hover{background:rgba(255,255,255,.14)}
+button:disabled{opacity:.35;cursor:default}
+.chip.on{background:var(--acc);border-color:var(--acc)}
+#go{width:64px;text-align:center;font:inherit;color:var(--fg);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:8px;padding:6px}
+#lbl{color:var(--mute);min-width:110px;text-align:right}
+#row2{display:flex;gap:8px;align-items:center}
+#seek{flex:1;accent-color:var(--acc);height:20px}
+#chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+.nav{position:fixed;top:50%;transform:translateY(-50%);z-index:9;width:46px;height:70px;border-radius:12px;font-size:22px;padding:0;background:var(--bar);opacity:0;transition:opacity .2s}
+body:hover .nav{opacity:.55}.nav:hover{opacity:1!important}
+body.hide .nav{opacity:0!important}
+#prev{left:10px}#next{right:10px}
+@media(hover:none){.nav{display:none}}
+#thumbs{position:fixed;top:0;bottom:0;left:0;width:min(340px,86vw);z-index:20;background:rgba(14,17,22,.97);border-right:1px solid var(--line);transform:translateX(-100%);transition:transform .25s;overflow-y:auto;padding:56px 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+#thumbs.open{transform:none}
+.th{cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;background:#161b22;position:relative}
+.th.cur{border-color:var(--acc)}
+.th img{display:block;width:100%;height:auto;aspect-ratio:1.414;object-fit:cover;background:#222}
+.th span{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.7);padding:1px 6px;border-radius:5px;font-size:11px}
+#thx{position:fixed;top:8px;left:10px;z-index:21;display:none}
+#thumbs.open~#thx{display:block}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:30;background:rgba(0,0,0,.75);padding:6px 14px;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+@media(max-width:640px){.title{display:none}#lbl{min-width:0}.hidem{display:none}}
+</style>
+</head>
+<body>
+<div id="stage"><img id="pg" alt="" draggable="false"></div>
+
+<div class="bar" id="top">
+  <button id="bth" title="Küçük resimler (T)">☰</button>
+  <span class="title">Zo gezegd 2.2 · Mondeling</span>
+  <span class="sp"></span>
+  <button id="zo" title="Uzaklaş (-)">−</button>
+  <button id="zr" title="Sığdır (0)" style="min-width:62px">100%</button>
+  <button id="zi" title="Yakınlaş (+)">+</button>
+  <button id="fs" class="hidem" title="Tam ekran (F)">⛶</button>
+</div>
+
+<button class="nav" id="prev" title="Önceki (←)">◀</button>
+<button class="nav" id="next" title="Sonraki (→)">▶</button>
+
+<div class="bar" id="bot">
+  <div id="row2">
+    <button id="pv">◀</button>
+    <input id="seek" type="range" min="1" value="1">
+    <button id="nx">▶</button>
+    <input id="go" inputmode="numeric" placeholder="s. no" title="Sayfa numarası yaz, Enter (G)">
+    <span id="lbl"></span>
+  </div>
+  <div id="chips"></div>
+</div>
+
+<aside id="thumbs"></aside><button id="thx">✕ Kapat</button>
+<div id="toast"></div>
+
+<script>
+const PAGES=[{"f": "p001.webp", "l": "Kapak"}, {"f": "p002.webp", "l": "s. 2–3"}, {"f": "p003.webp", "l": "s. 4–5"}, {"f": "p004.webp", "l": "s. 6–7"}, {"f": "p005.webp", "l": "s. 8–9"}, {"f": "p006.webp", "l": "s. 10–11"}, {"f": "p007.webp", "l": "s. 12–13"}, {"f": "p008.webp", "l": "s. 14–15"}, {"f": "p009.webp", "l": "s. 16–17"}, {"f": "p010.webp", "l": "s. 18–19"}, {"f": "p011.webp", "l": "s. 20–21"}, {"f": "p012.webp", "l": "s. 22–23"}, {"f": "p013.webp", "l": "s. 24–25"}, {"f": "p014.webp", "l": "s. 26–27"}, {"f": "p015.webp", "l": "s. 28–29"}, {"f": "p016.webp", "l": "s. 30–31"}, {"f": "p017.webp", "l": "s. 32–33"}, {"f": "p018.webp", "l": "s. 34–35"}, {"f": "p019.webp", "l": "s. 36–37"}, {"f": "p020.webp", "l": "s. 38–39"}, {"f": "p021.webp", "l": "s. 40–41"}, {"f": "p022.webp", "l": "s. 42–43"}, {"f": "p023.webp", "l": "s. 44–45"}, {"f": "p024.webp", "l": "s. 46–47"}, {"f": "p025.webp", "l": "s. 48–49"}, {"f": "p026.webp", "l": "s. 50–51"}, {"f": "p027.webp", "l": "s. 52–53"}, {"f": "p028.webp", "l": "s. 54–55"}, {"f": "p029.webp", "l": "s. 56–57"}, {"f": "p030.webp", "l": "s. 58–59"}, {"f": "p031.webp", "l": "s. 60–61"}, {"f": "p032.webp", "l": "s. 62–63"}, {"f": "p033.webp", "l": "s. 64–65"}, {"f": "p034.webp", "l": "s. 66–67"}, {"f": "p035.webp", "l": "s. 68–69"}, {"f": "p036.webp", "l": "s. 70–71"}, {"f": "p037.webp", "l": "s. 72–73"}, {"f": "p038.webp", "l": "s. 74–75"}, {"f": "p039.webp", "l": "s. 76–77"}, {"f": "p040.webp", "l": "s. 78–79"}, {"f": "p041.webp", "l": "s. 80–81"}, {"f": "p042.webp", "l": "s. 82–83"}, {"f": "p043.webp", "l": "s. 84–85"}, {"f": "p044.webp", "l": "s. 86–87"}, {"f": "p045.webp", "l": "s. 88–89"}, {"f": "p046.webp", "l": "s. 90–91"}, {"f": "p047.webp", "l": "s. 92–93"}, {"f": "p048.webp", "l": "s. 94–95"}, {"f": "p049.webp", "l": "s. 96–97"}, {"f": "p050.webp", "l": "s. 98–99"}, {"f": "p051.webp", "l": "s. 100–101"}, {"f": "p052.webp", "l": "s. 102–103"}, {"f": "p053.webp", "l": "s. 104–105"}, {"f": "p054.webp", "l": "s. 106–107"}, {"f": "p055.webp", "l": "s. 108–109"}, {"f": "p056.webp", "l": "s. 110–111"}, {"f": "p057.webp", "l": "s. 112–113"}, {"f": "p058.webp", "l": "s. 114–115"}, {"f": "p059.webp", "l": "s. 116–117"}, {"f": "p060.webp", "l": "s. 118–119"}, {"f": "p061.webp", "l": "s. 120–121"}, {"f": "p062.webp", "l": "s. 122–123"}, {"f": "p063.webp", "l": "s. 124–125"}, {"f": "p064.webp", "l": "s. 126–127"}, {"f": "p065.webp", "l": "s. 128–129"}, {"f": "p066.webp", "l": "s. 130–131"}, {"f": "p067.webp", "l": "s. 132–133"}, {"f": "p068.webp", "l": "s. 134–135"}, {"f": "p069.webp", "l": "s. 136–137"}, {"f": "p070.webp", "l": "s. 138–139"}, {"f": "p071.webp", "l": "s. 140–141"}, {"f": "p072.webp", "l": "s. 142–143"}, {"f": "p073.webp", "l": "s. 144–145"}, {"f": "p074.webp", "l": "s. 146–147"}, {"f": "p075.webp", "l": "s. 148–149"}, {"f": "p076.webp", "l": "s. 150–151"}, {"f": "p077.webp", "l": "s. 152–153"}, {"f": "p078.webp", "l": "s. 154–155"}, {"f": "p079.webp", "l": "s. 156–157"}, {"f": "p080.webp", "l": "s. 158–159"}, {"f": "p081.webp", "l": "s. 160–161"}, {"f": "p082.webp", "l": "s. 162–163"}, {"f": "p083.webp", "l": "s. 164–165"}, {"f": "p084.webp", "l": "s. 166–167"}, {"f": "p085.webp", "l": "s. 168–169"}, {"f": "p086.webp", "l": "s. 170–171"}, {"f": "p087.webp", "l": "s. 172–173"}, {"f": "p088.webp", "l": "s. 174–175"}, {"f": "p089.webp", "l": "s. 176–177"}, {"f": "p090.webp", "l": "s. 178–179"}, {"f": "p091.webp", "l": "s. 180–181"}, {"f": "p092.webp", "l": "s. 182–183"}, {"f": "p093.webp", "l": "s. 184–185"}, {"f": "p094.webp", "l": "s. 186–187"}, {"f": "p095.webp", "l": "s. 188–189"}, {"f": "p096.webp", "l": "s. 190–191"}, {"f": "p097.webp", "l": "s. 192–193"}, {"f": "p098.webp", "l": "s. 194–195"}, {"f": "p099.webp", "l": "s. 196–197"}, {"f": "p100.webp", "l": "s. 198–199"}, {"f": "p101.webp", "l": "s. 200–201"}, {"f": "p102.webp", "l": "s. 202–203"}, {"f": "p103.webp", "l": "s. 204–205"}, {"f": "p104.webp", "l": "s. 206–207"}, {"f": "p105.webp", "l": "s. 208–209"}, {"f": "p106.webp", "l": "s. 210–211"}];
+const DEEL=[["Kapak",1],["Deel 1",11],["Deel 2",45],["Deel 3",71],["Deel 4",101],["Deel 5",129],["Deel 6",151]];
+const $=id=>document.getElementById(id);
+const stage=$('stage'),img=$('pg');
+const N=PAGES.length,DIR='pages/';
+let cur=0,z=1,tx=0,ty=0,base=1,nw=1,nh=1,busy=false;
+const ZMIN=1,ZMAX=6;
+
+// her dosya bir spread (ör. s. 18–19)
+const rng=PAGES.map(p=>{const m=p.l.match(/\d+/g);return p.l==='Kapak'?[0,1]:[+m[0],+m[m.length-1]]});
+const pageToIdx=n=>{let i=rng.findIndex(r=>n>=r[0]&&n<=r[1]);if(i<0){let b=0,d=1e9;rng.forEach((r,k)=>{const x=Math.min(Math.abs(n-r[0]),Math.abs(n-r[1]));if(x<d){d=x;b=k}});i=b}return i};
+const pickDeel=i=>{let r=0;DEEL.forEach((d,k)=>{if(pageToIdx(d[1])<=i)r=k});return r};
+
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1200)}
+
+function layout(keep){
+  const W=stage.clientWidth,H=stage.clientHeight,hid=document.body.classList.contains('hide');
+  const topH=hid?0:48,botH=hid?0:92;
+  base=Math.min(W/nw,(H-topH-botH)/nh)*.98;
+  if(!keep){z=1;tx=ty=0}
+  apply();
+}
+function apply(){
+  const W=stage.clientWidth,H=stage.clientHeight,s=base*z,w=nw*s,h=nh*s;
+  tx=w<=W?(W-w)/2:Math.min(0,Math.max(W-w,tx));
+  ty=h<=H?(H-h)/2:Math.min(0,Math.max(H-h,ty));
+  img.style.transform='translate('+tx+'px,'+ty+'px) scale('+s+')';
+  $('zr').textContent=Math.round(z*100)+'%';
+  stage.classList.toggle('z',z>1);
+}
+function zoomAt(f,cx,cy){
+  const nz=Math.min(ZMAX,Math.max(ZMIN,z*f));f=nz/z;if(f===1)return;
+  tx=cx-(cx-tx)*f;ty=cy-(cy-ty)*f;z=nz;apply();
+}
+const zoomC=f=>zoomAt(f,stage.clientWidth/2,stage.clientHeight/2);
+
+function load(i,instant){
+  i=Math.max(0,Math.min(N-1,i));
+  if(busy&&!instant)return;
+  const p=PAGES[i];cur=i;busy=true;
+  img.classList.add('fade');
+  const t=new Image();
+  t.onload=()=>{
+    if(cur!==i)return;
+    nw=t.naturalWidth;nh=t.naturalHeight;
+    img.width=nw;img.height=nh;img.src=t.src;
+    z=1;layout(false);
+    requestAnimationFrame(()=>{img.classList.remove('fade');busy=false});
+    [i+1,i-1,i+2].forEach(k=>{if(k>=0&&k<N){const x=new Image();x.src=DIR+PAGES[k].f}});
+  };
+  t.onerror=()=>{busy=false;img.classList.remove('fade');toast('Sayfa yüklenemedi')};
+  t.src=DIR+p.f;
+  $('seek').value=i+1;$('lbl').textContent=p.l+'  ·  '+(i+1)+'/'+N;
+  $('pv').disabled=$('prev').disabled=i===0;$('nx').disabled=$('next').disabled=i===N-1;
+  document.querySelectorAll('.th.cur').forEach(e=>e.classList.remove('cur'));
+  const th=document.querySelector('.th[data-i="'+i+'"]');
+  if(th){th.classList.add('cur');if($('thumbs').classList.contains('open'))th.scrollIntoView({block:'center'})}
+  const dk=pickDeel(i);
+  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.i===dk));
+  try{localStorage.setItem('zg-mond-page',i)}catch(e){}
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+}
+const next=()=>load(cur+1),prev=()=>load(cur-1);
+
+DEEL.forEach((d,k)=>{const b=document.createElement('button');b.className='chip';b.dataset.i=k;b.textContent=d[0]+(k?' · s.'+d[1]:'');b.onclick=()=>load(pageToIdx(d[1]));$('chips').appendChild(b)});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const im=e.target.querySelector('img');im.src=im.dataset.s;io.unobserve(e.target)}}),{root:$('thumbs'),rootMargin:'300px'});
+PAGES.forEach((p,i)=>{const d=document.createElement('div');d.className='th';d.dataset.i=i;d.innerHTML='<img data-s="'+DIR+p.f+'" alt=""><span>'+p.l+'</span>';d.onclick=()=>{load(i);if(innerWidth<900)$('thumbs').classList.remove('open')};$('thumbs').appendChild(d);io.observe(d)});
+$('seek').max=N;
+$('seek').oninput=e=>load(+e.target.value-1,true);
+$('bth').onclick=()=>$('thumbs').classList.toggle('open');
+$('thx').onclick=()=>$('thumbs').classList.remove('open');
+$('pv').onclick=$('prev').onclick=prev;$('nx').onclick=$('next').onclick=next;
+$('zi').onclick=()=>zoomC(1.4);$('zo').onclick=()=>zoomC(1/1.4);$('zr').onclick=()=>{z=1;apply()};
+function toggleFS(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}
+$('fs').onclick=toggleFS;
+$('go').onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){const n=parseInt(e.target.value);if(n>=0){const i=pageToIdx(n);load(i);toast('s. '+n+' → '+PAGES[i].l)}e.target.value='';e.target.blur()}};
+
+stage.addEventListener('wheel',e=>{e.preventDefault();
+  if(e.shiftKey){e.deltaY>0?next():prev();return}
+  zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)),e.clientX,e.clientY)},{passive:false});
+stage.addEventListener('dblclick',e=>{if(z>1){z=1;apply()}else zoomAt(2.5,e.clientX,e.clientY)});
+
+const ptr=new Map();let pinch0=null,sx=0,sy=0,moved=0,t0=0,multi=false;
+stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){sx=e.clientX;sy=e.clientY;moved=0;t0=Date.now();multi=false;stage.classList.add('drag')}
+  if(ptr.size===2){multi=true;const v=[...ptr.values()];pinch0={d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y),z}}});
+stage.addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+  if(ptr.size===2&&pinch0){const v=[...ptr.values()];const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);zoomAt((pinch0.z*d/pinch0.d)/z,(v[0].x+v[1].x)/2,(v[0].y+v[1].y)/2);return}
+  moved+=Math.abs(dx)+Math.abs(dy);
+  if(z>1){tx+=dx;ty+=dy;apply()}});
+function end(e){const had=ptr.delete(e.pointerId);stage.classList.remove('drag');if(ptr.size<2)pinch0=null;
+  if(!had||ptr.size||multi)return;
+  const dx=e.clientX-sx,dy=e.clientY-sy;
+  if(z===1&&Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.3){dx<0?next():prev()}
+  else if(moved<8&&Date.now()-t0<300){
+    const r=e.clientX/stage.clientWidth;
+    if(z===1&&r<.15)prev();else if(z===1&&r>.85)next();else{document.body.classList.toggle('hide');layout(true)}}}
+stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'&&e.target.id!=='seek')return;
+  const k=e.key,pan=(x,y)=>{tx+=x;ty+=y;apply();e.preventDefault()};
+  if(k==='ArrowRight'){z>1?pan(-80,0):(next(),e.preventDefault())}
+  else if(k==='ArrowLeft'){z>1?pan(80,0):(prev(),e.preventDefault())}
+  else if(k==='PageDown'||(k===' '&&!e.shiftKey)){next();e.preventDefault()}
+  else if(k==='PageUp'||(k===' '&&e.shiftKey)){prev();e.preventDefault()}
+  else if(k==='ArrowUp'&&z>1)pan(0,80);
+  else if(k==='ArrowDown'&&z>1)pan(0,-80);
+  else if(k==='+'||k==='=')zoomC(1.3);
+  else if(k==='-'||k==='_')zoomC(1/1.3);
+  else if(k==='0'){z=1;apply()}
+  else if(k==='Home')load(0);else if(k==='End')load(N-1);
+  else if(k==='f'||k==='F')toggleFS();
+  else if(k==='t'||k==='T')$('thumbs').classList.toggle('open');
+  else if(k==='h'||k==='H'){document.body.classList.toggle('hide');layout(true)}
+  else if(k==='g'||k==='G'){e.preventDefault();$('go').focus()}
+  else if(k==='Escape')$('thumbs').classList.remove('open');
+});
+addEventListener('resize',()=>layout(true));
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>=1&&h<=N)start=h-1;else try{start=+localStorage.getItem('zg-mond-page')||0}catch(e){}
+load(start,true);
+</script>
+</body>
+</html>
