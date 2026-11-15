@@ -45,6 +45,33 @@ body.hide .nav{opacity:0!important}
 #toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:30;background:rgba(0,0,0,.75);padding:6px 14px;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none}
 #toast.on{opacity:1}
 @media(max-width:640px){.title{display:none}#lbl{min-width:0}.hidem{display:none}}
+
+#tr{position:fixed;top:0;right:0;bottom:0;width:400px;z-index:15;background:#12161d;border-left:1px solid var(--line);transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column}
+body.tr-open #tr{transform:none}
+body.tr-open #stage{right:400px}
+body.tr-open .bar{right:400px}
+body.tr-open .nav#next{right:410px}
+#trh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+#trh b{flex:1;font-size:15px}
+#trb{overflow-y:auto;padding:14px 16px 90px;line-height:1.55;font-size:14.5px}
+#trb h3{margin:0 0 6px;font-size:17px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(79,140,255,.18);color:#9bbcff;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.box{margin:12px 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.box h4{margin:0 0 4px;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.box.g{border-color:rgba(255,196,77,.35)}.box.t{border-color:rgba(80,200,140,.35)}
+.vl{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.vl span:nth-child(odd){color:#9bbcff}
+.vl span{padding:3px 0;border-bottom:1px solid var(--line)}
+#trb ul{margin:4px 0 0;padding-left:18px}
+.dim{color:var(--mute)}
+@media(max-width:800px){
+ #tr{top:auto;width:100%;height:58vh;transform:translateY(100%);border-left:0;border-top:1px solid var(--line);z-index:25}
+ body.tr-open #tr{transform:none}
+ body.tr-open #stage{right:0;bottom:58vh}
+ body.tr-open .bar{right:0}
+ body.tr-open #bot{display:none}
+ body.tr-open .nav#next{right:10px}
+}
 </style>
 </head>
 <body>
@@ -57,6 +84,8 @@ body.hide .nav{opacity:0!important}
   <button id="zo" title="Uzaklaş (-)">−</button>
   <button id="zr" title="Sığdır (0)" style="min-width:62px">100%</button>
   <button id="zi" title="Yakınlaş (+)">+</button>
+  <a class="chip hidem" href="https://mbofis03-mb.github.io/mondeling2-2/" target="_blank" rel="noopener" title="Deel 1-6 ders notları, alıştırma cevapları, gramer özeti" style="text-decoration:none">📚 Ders notları</a>
+  <button id="trb2" title="Türkçe anlatım (E)">🇹🇷 Anlatım</button>
   <button id="fs" class="hidem" title="Tam ekran (F)">⛶</button>
 </div>
 
@@ -74,9 +103,11 @@ body.hide .nav{opacity:0!important}
   <div id="chips"></div>
 </div>
 
+<aside id="tr"><div id="trh"><b>Türkçe anlatım</b><button id="trx">✕</button></div><div id="trb"></div></aside>
 <aside id="thumbs"></aside><button id="thx">✕ Kapat</button>
 <div id="toast"></div>
 
+<script src="tr.js"></script>
 <script>
 const PAGES=[{"f": "p001.webp", "l": "Kapak"}, {"f": "p002.webp", "l": "s. 2–3"}, {"f": "p003.webp", "l": "s. 4–5"}, {"f": "p004.webp", "l": "s. 6–7"}, {"f": "p005.webp", "l": "s. 8–9"}, {"f": "p006.webp", "l": "s. 10–11"}, {"f": "p007.webp", "l": "s. 12–13"}, {"f": "p008.webp", "l": "s. 14–15"}, {"f": "p009.webp", "l": "s. 16–17"}, {"f": "p010.webp", "l": "s. 18–19"}, {"f": "p011.webp", "l": "s. 20–21"}, {"f": "p012.webp", "l": "s. 22–23"}, {"f": "p013.webp", "l": "s. 24–25"}, {"f": "p014.webp", "l": "s. 26–27"}, {"f": "p015.webp", "l": "s. 28–29"}, {"f": "p016.webp", "l": "s. 30–31"}, {"f": "p017.webp", "l": "s. 32–33"}, {"f": "p018.webp", "l": "s. 34–35"}, {"f": "p019.webp", "l": "s. 36–37"}, {"f": "p020.webp", "l": "s. 38–39"}, {"f": "p021.webp", "l": "s. 40–41"}, {"f": "p022.webp", "l": "s. 42–43"}, {"f": "p023.webp", "l": "s. 44–45"}, {"f": "p024.webp", "l": "s. 46–47"}, {"f": "p025.webp", "l": "s. 48–49"}, {"f": "p026.webp", "l": "s. 50–51"}, {"f": "p027.webp", "l": "s. 52–53"}, {"f": "p028.webp", "l": "s. 54–55"}, {"f": "p029.webp", "l": "s. 56–57"}, {"f": "p030.webp", "l": "s. 58–59"}, {"f": "p031.webp", "l": "s. 60–61"}, {"f": "p032.webp", "l": "s. 62–63"}, {"f": "p033.webp", "l": "s. 64–65"}, {"f": "p034.webp", "l": "s. 66–67"}, {"f": "p035.webp", "l": "s. 68–69"}, {"f": "p036.webp", "l": "s. 70–71"}, {"f": "p037.webp", "l": "s. 72–73"}, {"f": "p038.webp", "l": "s. 74–75"}, {"f": "p039.webp", "l": "s. 76–77"}, {"f": "p040.webp", "l": "s. 78–79"}, {"f": "p041.webp", "l": "s. 80–81"}, {"f": "p042.webp", "l": "s. 82–83"}, {"f": "p043.webp", "l": "s. 84–85"}, {"f": "p044.webp", "l": "s. 86–87"}, {"f": "p045.webp", "l": "s. 88–89"}, {"f": "p046.webp", "l": "s. 90–91"}, {"f": "p047.webp", "l": "s. 92–93"}, {"f": "p048.webp", "l": "s. 94–95"}, {"f": "p049.webp", "l": "s. 96–97"}, {"f": "p050.webp", "l": "s. 98–99"}, {"f": "p051.webp", "l": "s. 100–101"}, {"f": "p052.webp", "l": "s. 102–103"}, {"f": "p053.webp", "l": "s. 104–105"}, {"f": "p054.webp", "l": "s. 106–107"}, {"f": "p055.webp", "l": "s. 108–109"}, {"f": "p056.webp", "l": "s. 110–111"}, {"f": "p057.webp", "l": "s. 112–113"}, {"f": "p058.webp", "l": "s. 114–115"}, {"f": "p059.webp", "l": "s. 116–117"}, {"f": "p060.webp", "l": "s. 118–119"}, {"f": "p061.webp", "l": "s. 120–121"}, {"f": "p062.webp", "l": "s. 122–123"}, {"f": "p063.webp", "l": "s. 124–125"}, {"f": "p064.webp", "l": "s. 126–127"}, {"f": "p065.webp", "l": "s. 128–129"}, {"f": "p066.webp", "l": "s. 130–131"}, {"f": "p067.webp", "l": "s. 132–133"}, {"f": "p068.webp", "l": "s. 134–135"}, {"f": "p069.webp", "l": "s. 136–137"}, {"f": "p070.webp", "l": "s. 138–139"}, {"f": "p071.webp", "l": "s. 140–141"}, {"f": "p072.webp", "l": "s. 142–143"}, {"f": "p073.webp", "l": "s. 144–145"}, {"f": "p074.webp", "l": "s. 146–147"}, {"f": "p075.webp", "l": "s. 148–149"}, {"f": "p076.webp", "l": "s. 150–151"}, {"f": "p077.webp", "l": "s. 152–153"}, {"f": "p078.webp", "l": "s. 154–155"}, {"f": "p079.webp", "l": "s. 156–157"}, {"f": "p080.webp", "l": "s. 158–159"}, {"f": "p081.webp", "l": "s. 160–161"}, {"f": "p082.webp", "l": "s. 162–163"}, {"f": "p083.webp", "l": "s. 164–165"}, {"f": "p084.webp", "l": "s. 166–167"}, {"f": "p085.webp", "l": "s. 168–169"}, {"f": "p086.webp", "l": "s. 170–171"}, {"f": "p087.webp", "l": "s. 172–173"}, {"f": "p088.webp", "l": "s. 174–175"}, {"f": "p089.webp", "l": "s. 176–177"}, {"f": "p090.webp", "l": "s. 178–179"}, {"f": "p091.webp", "l": "s. 180–181"}, {"f": "p092.webp", "l": "s. 182–183"}, {"f": "p093.webp", "l": "s. 184–185"}, {"f": "p094.webp", "l": "s. 186–187"}, {"f": "p095.webp", "l": "s. 188–189"}, {"f": "p096.webp", "l": "s. 190–191"}, {"f": "p097.webp", "l": "s. 192–193"}, {"f": "p098.webp", "l": "s. 194–195"}, {"f": "p099.webp", "l": "s. 196–197"}, {"f": "p100.webp", "l": "s. 198–199"}, {"f": "p101.webp", "l": "s. 200–201"}, {"f": "p102.webp", "l": "s. 202–203"}, {"f": "p103.webp", "l": "s. 204–205"}, {"f": "p104.webp", "l": "s. 206–207"}, {"f": "p105.webp", "l": "s. 208–209"}, {"f": "p106.webp", "l": "s. 210–211"}];
 const DEEL=[["Kapak",1],["Deel 1",11],["Deel 2",45],["Deel 3",71],["Deel 4",101],["Deel 5",129],["Deel 6",151]];
@@ -137,9 +168,28 @@ function load(i,instant){
   if(th){th.classList.add('cur');if($('thumbs').classList.contains('open'))th.scrollIntoView({block:'center'})}
   const dk=pickDeel(i);
   document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.i===dk));
+  renderTR(i);
   try{localStorage.setItem('zg-mond-page',i)}catch(e){}
   try{history.replaceState(null,'','#'+(i+1))}catch(e){}
 }
+
+let TR={};
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function renderTR(i){
+  const d=(window.TRDATA||{})[i+1],b=$('trb');
+  const head='<div class="dim" style="margin-bottom:6px">'+esc(PAGES[i].l)+'</div>';
+  if(!d){b.innerHTML=head+'<p class="dim">Bu sayfa için Türkçe anlatım yok.</p>';return}
+  let h=head+'<span class="badge">'+esc(d.tur||'')+'</span><h3>'+esc(d.baslik)+'</h3><p>'+esc(d.ozet)+'</p>';
+  if(d.kelimeler&&d.kelimeler.length)h+='<div class="box"><h4>Kelimeler</h4><div class="vl">'+d.kelimeler.map(k=>'<span>'+esc(k.nl)+'</span><span>'+esc(k.tr)+'</span>').join('')+'</div></div>';
+  if(d.gramer)h+='<div class="box g"><h4>Gramer</h4>'+esc(d.gramer).replace(/\n/g,'<br>')+'</div>';
+  if(d.ipucu)h+='<div class="box t"><h4>İpucu / örnek</h4>'+esc(d.ipucu).replace(/\n/g,'<br>')+'</div>';
+  if(d.gorevler&&d.gorevler.length)h+='<div class="box"><h4>Alıştırmalar</h4><ul>'+d.gorevler.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+  b.innerHTML=h;b.scrollTop=0;
+}
+function setTR(on){document.body.classList.toggle('tr-open',on);try{localStorage.setItem('zg-mond-tr',on?1:0)}catch(e){}setTimeout(()=>layout(true),0)}
+$('trb2').onclick=()=>setTR(!document.body.classList.contains('tr-open'));
+$('trx').onclick=()=>setTR(false);
+try{if(localStorage.getItem('zg-mond-tr')==='1'||(localStorage.getItem('zg-mond-tr')===null&&innerWidth>800))document.body.classList.add('tr-open')}catch(e){}
 const next=()=>load(cur+1),prev=()=>load(cur-1);
 
 DEEL.forEach((d,k)=>{const b=document.createElement('button');b.className='chip';b.dataset.i=k;b.textContent=d[0]+(k?' · s.'+d[1]:'');b.onclick=()=>load(pageToIdx(d[1]));$('chips').appendChild(b)});
@@ -192,6 +242,7 @@ addEventListener('keydown',e=>{
   else if(k==='0'){z=1;apply()}
   else if(k==='Home')load(0);else if(k==='End')load(N-1);
   else if(k==='f'||k==='F')toggleFS();
+  else if(k==='e'||k==='E')setTR(!document.body.classList.contains('tr-open'));
   else if(k==='t'||k==='T')$('thumbs').classList.toggle('open');
   else if(k==='h'||k==='H'){document.body.classList.toggle('hide');layout(true)}
   else if(k==='g'||k==='G'){e.preventDefault();$('go').focus()}
